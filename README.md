@@ -240,29 +240,29 @@ Lo strumento apparirà in: **Processing Sketched → Agricoltura di Precisione �
 
 Il pannello parametri è diviso in sezioni logiche: area, orientamento, sesto, navigazione, varietà, materiale ed export.
 
-![Parametri parte 1](docs/interfaccia_parametri_1.png)
+![Parametri parte 1](interfaccia_parametri_1.png)
 
-![Parametri parte 2](docs/interfaccia_parametri_2.png)
+![Parametri parte 2](https://github.com/alessandroazzurretti-web/sestodimpiantointerfaccia_parametri_2.png)
 
 ### Risultato in QGIS
 
 Punti di impianto generati all'interno del poligono (viola), con la linea di riferimento per la direzione delle file (rosso).
 
-![QGIS con punti e direzione](docs/qgis_punti_direzione.png)
+![QGIS con punti e direzione](qgis_punti_direzione.png)
 
 ### Navigazione in campo con SW Maps
 
 Selezione dei layer dal GeoPackage: piante, pali di testata, tutori e fili, ciascuno attivabile indipendentemente.
 
-![Selezione layer GeoPackage](docs/swmaps_layer_selection.jpg)
+![Selezione layer GeoPackage](swmaps_layer_selection.jpg)
 
 Tutti i layer visualizzati insieme: linee fila (giallo), punti pianta (giallo), tutori e pali di testata (rosso).
 
-![SW Maps tutti i layer](docs/swmaps_tutti_layer.jpg)
+![SW Maps tutti i layer](swmaps_tutti_layer.jpg)
 
 Vista ravvicinata con layer piante e tutori sovrapposti all'ortofoto.
 
-![SW Maps in campo](docs/swmaps_campo.jpg)
+![SW Maps in campo](swmaps_campo.jpg)
 
 ---
 
