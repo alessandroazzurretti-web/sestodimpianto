@@ -242,7 +242,7 @@ Il pannello parametri è diviso in sezioni logiche: area, orientamento, sesto, n
 
 ![Parametri parte 1](interfaccia_parametri_1.png)
 
-![Parametri parte 2](https://github.com/alessandroazzurretti-web/sestodimpiantointerfaccia_parametri_2.png)
+![Parametri parte 2](interfaccia_parametri_2.png)
 
 ### Risultato in QGIS
 
