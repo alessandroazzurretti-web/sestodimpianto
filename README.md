@@ -262,9 +262,14 @@ Tutti i layer visualizzati insieme: linee fila (giallo), punti pianta (giallo), 
 
 Vista ravvicinata con layer piante e tutori sovrapposti all'ortofoto.
 
+### Stima fabbisogno materiale
 
+Report generato automaticamente con il riepilogo di piante, tutori, pali, filo e dettaglio per fila.
+
+![Stima fabbisogno](stima_fabbisogno.png)
 
 ---
+
 
 ## Note tecniche
 
