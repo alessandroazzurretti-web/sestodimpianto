@@ -1,4 +1,10 @@
-# 🌱  Generatore Sesto d'Impianto 🌱
+# 🌱 Generatore Sesto d'Impianto 🌱
+
+🇮🇹 [Italiano](#italiano) | 🇬🇧 [English](#english)
+
+---
+
+# Italiano
 
 **Script di Processing per QGIS** — Genera automaticamente i punti di impianto all'interno di un'area poligonale, con esportazione pronta per la navigazione in campo tramite **SW Maps + RTK**.
 
@@ -185,55 +191,6 @@ Lo strumento apparirà in: **Processing Sketched → Agricoltura di Precisione �
 
 ---
 
-## Output
-
-### Layer punti (QGIS + GeoPackage)
-
-| Campo | Tipo | Descrizione |
-|---|---|---|
-| `id` | Int | Numero progressivo |
-| `fila` | Int | Numero della fila |
-| `pianta` | Int | Numero della pianta nella fila |
-| `nome` | String | Nome waypoint (es. `MELO_F01P001`) |
-| `varieta` | String | Nome della varietà assegnata |
-| `coord_x` | Double | Coordinata X nel CRS del progetto |
-| `coord_y` | Double | Coordinata Y nel CRS del progetto |
-| `lon` | Double | Longitudine WGS84 |
-| `lat` | Double | Latitudine WGS84 |
-
-### Layer pali di testata (GeoPackage)
-
-| Campo | Tipo | Descrizione |
-|---|---|---|
-| `id` | Int | Numero progressivo |
-| `fila` | Int | Numero della fila |
-| `posizione` | String | `inizio` o `fine` |
-| `lat` / `lon` | Double | Coordinate WGS84 |
-
-### Layer tutori (GeoPackage)
-
-| Campo | Tipo | Descrizione |
-|---|---|---|
-| `id` | Int | Numero progressivo |
-| `fila` | Int | Numero della fila |
-| `dopo_pianta` | Int | Posizione di riferimento |
-| `posizione` | String | `sulla_pianta` o `tra_piante` |
-| `lat` / `lon` | Double | Coordinate WGS84 |
-
-### Layer fili (GeoPackage)
-
-| Campo | Tipo | Descrizione |
-|---|---|---|
-| `id` | Int | Numero progressivo |
-| `fila` | Int | Numero della fila |
-| `varieta` | String | Varietà prevalente della fila |
-| `n_piante` | Int | Piante nella fila |
-| `lunghezza_m` | Double | Lunghezza palo-palo in metri |
-| `n_fili` | Int | Numero fili impostato |
-| `filo_fila_m` | Double | Filo totale per la fila (lunghezza × n_fili) |
-
----
-
 ## Screenshot
 
 ### Interfaccia dello script in QGIS
@@ -262,6 +219,8 @@ Tutti i layer visualizzati insieme: linee fila (giallo), punti pianta (giallo), 
 
 Vista ravvicinata con layer piante e tutori sovrapposti all'ortofoto.
 
+![SW Maps in campo](swmaps_campo.jpg)
+
 ### Stima fabbisogno materiale
 
 Report generato automaticamente con il riepilogo di piante, tutori, pali, filo e dettaglio per fila.
@@ -269,7 +228,6 @@ Report generato automaticamente con il riepilogo di piante, tutori, pali, filo e
 ![Stima fabbisogno](stima_fabbisogno.png)
 
 ---
-
 
 ## Note tecniche
 
@@ -281,6 +239,7 @@ Report generato automaticamente con il riepilogo di piante, tutori, pali, filo e
 
 ---
 
+
 ## Licenza
 
 Questo progetto è rilasciato con licenza [GPL-3.0](LICENSE). Chiunque può usare, modificare e redistribuire lo script, a condizione che le modifiche vengano rilasciate con la stessa licenza open source.
@@ -290,3 +249,251 @@ Questo progetto è rilasciato con licenza [GPL-3.0](LICENSE). Chiunque può usar
 ## Contribuire
 
 Segnalazioni di bug, richieste di funzionalità e pull request sono benvenute. Apri una [issue](../../issues) per discutere modifiche importanti prima di procedere.
+
+---
+---
+
+# English
+
+**QGIS Processing Script** — Automatically generates planting points within a polygon area, with export ready for field navigation via **SW Maps + RTK**.
+
+Designed for agronomists, nursery operators, and agricultural technicians who need to plan new tree plantations (orchards, vineyards, olive groves, hazelnut groves...) and bring the points directly to the field with a GNSS receiver.
+
+---
+
+## Features
+
+### Planting pattern generation
+
+The script generates a regular grid of points within a polygon drawn in QGIS. Two planting patterns are supported:
+
+- **Rectangle** — parallel rows with plants aligned across rows
+- **Quincunx** — parallel rows with plants offset by half the in-row spacing in alternate rows, optimizing light interception
+
+Row orientation can be set in two ways: manually entering the angle in degrees (0° = North, 90° = East), or by drawing a **reference line** in QGIS in the desired direction — the script calculates the azimuth automatically.
+
+### Headland buffer
+
+The "inner margin" parameter applies a negative buffer to the polygon before generating points. For example, setting 5 meters means points will start 5 m from the field boundary, leaving space for machinery turning.
+
+### Exclusion zones
+
+You can provide a second polygon layer representing obstacles to avoid: ditches, existing trees, buildings, farm roads. The script subtracts these areas from the main polygon before generation, so no point will ever fall in an excluded zone.
+
+### Serpentine numbering
+
+When enabled, rows are numbered with alternating direction: row 1 goes left to right, row 2 right to left, row 3 left again, and so on. This mirrors the natural walking path between rows and optimizes field navigation with the RTK receiver.
+
+### Navigation route
+
+The KML file includes a line connecting all points in traversal order (row by row, following the serpentine pattern). In SW Maps you can display it as a track to follow in the field.
+
+### Multi-variety and pollinators
+
+By specifying variety names separated by commas (e.g. `Golden,Pollinator`) and an interval (e.g. `5`), the script automatically assigns the pollinator variety every N plants along the row. Each plant in the resulting layer has the `varieta` attribute filled in.
+
+Assignment is per plant, not per row: in a row with interval 5 you'll get plants 1-4 Golden, plant 5 Pollinator, plants 6-9 Golden, plant 10 Pollinator, and so on.
+
+In the KML, varieties are displayed with different colors for immediate visual feedback.
+
+### Stakes with uniform distribution
+
+Stakes are placed every N plants with uniform and symmetrical distribution. The script calculates the number of stakes needed for the row and distributes them so that the gap at both ends is equal.
+
+For example, with 23 plants and interval 10: 2 stakes at positions 8 and 15, creating three segments of 8-7-8 plants.
+
+You can choose whether to place the stake:
+
+- **On the plant** — the stake coincides with the nearest plant position
+- **Between two plants** — the stake is positioned at the interpolated point between two adjacent plants
+
+### End posts
+
+Two points are automatically generated for each row, positioned 1 meter beyond the first and last plant along the row direction. These represent the trellis end posts.
+
+### Material requirements estimate
+
+After generation, the script produces a complete report with:
+
+- Total plants and per variety, with +5% spare
+- Number of stakes and positioning
+- End posts (2 per row)
+- Total wire in meters and km, with per-row detail (post-to-post length × number of wires)
+- Total and net area, plant density/ha
+
+The report is saved as a `.txt` file in the same folder as the output file, with the same name (e.g. `orchard_apple.gpkg` → `orchard_apple.txt`).
+
+### Export
+
+The script exports in two formats, independently selectable:
+
+**KML** — Single file with:
+- Folder for each row containing plant points
+- Different colors per variety
+- Navigation route line
+- Ready for SW Maps: copy to `SW_Maps/Maps/kml/` on phone
+
+**GeoPackage** — Multi-layer file with:
+- `piante_[prefix]` — plant points with all attributes
+- `pali_testata_[prefix]` — end post points (start/end of row)
+- `tutori_[prefix]` — stake points with uniform distribution
+- `fili_[prefix]` — post-to-post lines for each row, with length and wire estimate
+
+In SW Maps each layer can be toggled on/off independently depending on the current operation.
+
+### CRS handling
+
+If the layer is in geographic coordinates (WGS84 / EPSG:4326), the script automatically detects the correct UTM zone from the layer extent and reprojects internally for all calculations in meters. Results are returned in the original project CRS.
+
+---
+
+## Installation
+
+### Requirements
+
+- QGIS 3.x (tested on QGIS 3.34 LTR)
+
+### Method 1 — Manual copy
+
+Copy `sesto_impianto_generator.py` to the Processing scripts folder:
+
+| OS | Path |
+|---|---|
+| Windows | `%appdata%\QGIS\QGIS3\profiles\default\processing\scripts\` |
+| Linux | `~/.local/share/QGIS/QGIS3/profiles/default/processing/scripts/` |
+| macOS | `~/Library/Application Support/QGIS/QGIS3/profiles/default/processing/scripts/` |
+
+> **Note:** on Windows the `AppData` folder is hidden. Paste `%appdata%\QGIS\QGIS3\profiles\default\processing\scripts\` directly in File Explorer's address bar. Create the `scripts` folder if it doesn't exist.
+
+After copying, restart QGIS or refresh the Processing Sketched.
+
+### Method 2 — From QGIS
+
+1. Open **Processing → Sketched** (`Ctrl+Alt+T`)
+2. At the top, **Script** icon → **Add script from file...**
+3. Select `sesto_impianto_generator.py`
+
+The tool will appear in: **Processing Sketched → Agricoltura di Precisione → Sesto d'Impianto Generator**
+
+---
+
+## Usage
+
+### Parameters
+
+| Parameter | Description | Default |
+|---|---|---|
+| **Planting area polygon** | Polygon layer with the area to plant | — |
+| **Exclusion zones** | Optional polygon layer with areas to avoid | — |
+| **Headland** | Inner margin from boundary, in meters | 0 |
+| **Reference line** | Optional line layer for row orientation | — |
+| **Manual row angle** | Azimuth in degrees (0=North, 90=East). Ignored if line is provided | 0 |
+| **Row spacing** | Spacing between parallel rows, in meters | 4.0 |
+| **In-row spacing** | Spacing between plants in the same row, in meters | 2.0 |
+| **Planting pattern** | Rectangle or Quincunx | Rectangle |
+| **Starting corner** | Where numbering begins: NW, NE, SW, SE | North-West |
+| **Serpentine numbering** | Alternates direction row by row | Yes |
+| **Variety names** | Comma-separated (e.g. `Golden,Pollinator`) | — |
+| **Pollinator interval** | Every N plants, 0 = disabled | 0 |
+| **Point name prefix** | E.g. `APPLE`, `VINE` — appears in waypoint names | — |
+| **Stake every N plants** | 0 = no stakes | 0 |
+| **Stake position** | On plant or between two plants | On plant |
+| **Wires per row** | For total wire calculation, 0 = none | 0 |
+| **Export KML** | Generate KML file for SW Maps | Yes |
+| **Export GeoPackage** | Generate multi-layer GPKG file | No |
+
+### Practical example: apple orchard
+
+1. Draw the field polygon in QGIS
+2. Draw a polygon for the ditch to exclude (optional)
+3. Draw a line in the desired row direction
+4. Open the script from the Processing Sketched
+5. Set:
+   - Row spacing: **4.0 m**
+   - In-row spacing: **1.5 m**
+   - Headland: **5 m**
+   - Pattern: **Rectangle**
+   - Varieties: **Golden,Fuji Pollinator**
+   - Pollinator interval: **5**
+   - Prefix: **APPLE**
+   - Stake every: **7** plants, **between two plants**
+   - Wires: **3**
+6. Export KML + GeoPackage
+7. Transfer files to phone
+
+### Import in SW Maps
+
+**KML:**
+1. Copy the `.kml` file to `SW_Maps/Maps/kml/` on the phone
+2. In SW Maps: Layer icon → Add → KML → select file
+
+**GeoPackage:**
+1. Copy the `.gpkg` file to the phone
+2. In SW Maps: Layer icon → Add → GeoPackage → select file and desired layers
+
+### Field navigation
+
+- Sort waypoints by name to follow the serpentine sequence
+- Format `F01P001` means Row 01, Plant 001
+- The KML route shows the optimal row-by-row path
+- With centimeter-level RTK, place the stake/plant when accuracy is sufficient
+
+---
+
+## Screenshots
+
+### QGIS script interface
+
+The parameter panel is divided into logical sections: area, orientation, pattern, navigation, varieties, materials, and export.
+
+![Parameters part 1](interfaccia_parametri_1.png)
+
+![Parameters part 2](interfaccia_parametri_2.png)
+
+### Result in QGIS
+
+Planting points generated within the polygon (purple), with the reference line for row direction (red).
+
+![QGIS with points and direction](qgis_punti_direzione.png)
+
+### Field navigation with SW Maps
+
+GeoPackage layer selection: plants, end posts, stakes, and wires — each togglable independently.
+
+![GeoPackage layer selection](swmaps_layer_selection.jpg)
+
+All layers displayed together: row lines (yellow), plant points (yellow), stakes and end posts (red).
+
+![SW Maps all layers](swmaps_tutti_layer.jpg)
+
+Close-up view with plant and stake layers over the orthophoto.
+
+![SW Maps in the field](swmaps_campo.jpg)
+
+### Material requirements report
+
+Automatically generated report with summary of plants, stakes, posts, wire, and per-row detail.
+
+![Material estimate](stima_fabbisogno.png)
+
+---
+
+## Technical notes
+
+- **Multi-polygon:** if the layer contains multiple features they are merged automatically before generation
+- **Performance:** tested up to approximately 50,000 points without issues
+- **Quincunx:** even rows are offset by half the in-row spacing
+- **Stake distribution:** symmetrical algorithm that divides the row into equal segments, minimizing the gap at both ends
+- **End posts:** positioned with a 1-meter offset beyond the first and last plant along the row direction
+
+---
+
+## License
+
+This project is released under the [GPL-3.0](LICENSE) license. Anyone can use, modify, and redistribute the script, provided that modifications are released under the same open source license.
+
+---
+
+## Contributing
+
+Bug reports, feature requests, and pull requests are welcome. Open an [issue](../../issues) to discuss major changes before proceeding.
