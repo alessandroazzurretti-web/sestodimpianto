@@ -1,4 +1,4 @@
-# 🌱 Sesto d'Impianto Generatore
+# 🌱  Generatore Sesto d'Impianto 🌱
 
 **Script di Processing per QGIS** — Genera automaticamente i punti di impianto all'interno di un'area poligonale, con esportazione pronta per la navigazione in campo tramite **SW Maps + RTK**.
 
