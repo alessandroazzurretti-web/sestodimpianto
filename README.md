@@ -262,7 +262,7 @@ Tutti i layer visualizzati insieme: linee fila (giallo), punti pianta (giallo), 
 
 Vista ravvicinata con layer piante e tutori sovrapposti all'ortofoto.
 
-![SW Maps in campo](swmaps_campo.jpg)
+
 
 ---
 
