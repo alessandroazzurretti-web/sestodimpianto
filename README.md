@@ -219,8 +219,6 @@ Tutti i layer visualizzati insieme: linee fila (giallo), punti pianta (giallo), 
 
 Vista ravvicinata con layer piante e tutori sovrapposti all'ortofoto.
 
-![SW Maps in campo](swmaps_campo.jpg)
-
 ### Stima fabbisogno materiale
 
 Report generato automaticamente con il riepilogo di piante, tutori, pali, filo e dettaglio per fila.
@@ -468,7 +466,6 @@ All layers displayed together: row lines (yellow), plant points (yellow), stakes
 
 Close-up view with plant and stake layers over the orthophoto.
 
-![SW Maps in the field](swmaps_campo.jpg)
 
 ### Material requirements report
 
