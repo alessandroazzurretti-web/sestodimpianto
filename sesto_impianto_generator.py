@@ -1,13 +1,11 @@
 # Sesto d'Impianto Generator - QGIS Processing Script
-# Copyright (C) 2026
+# Copyright (C) 2026 Alessandro Azzurretti
 # License: GPL-3.0 - https://www.gnu.org/licenses/gpl-3.0.txt
 # Genera punti di impianto (rettangolo/quinconce) all'interno di un poligono.
 # Esporta KML e/o GeoPackage per navigazione con SW Maps + RTK.
 # Versione: 2.0
 # Funzionalita: capezzagna, zone esclusione, numerazione serpentina,
 #   rotta navigazione, multi-varieta, stima fabbisogno
-# Sviluppato da Alessandro Azzurretti
-
 
 from qgis.core import (
     QgsProcessing,
@@ -317,14 +315,37 @@ class SestoImpiantoGenerator(QgsProcessingAlgorithm):
 
         source_crs = layer.crs()
 
-        # -- CRS --
+        # -- CRS: riproietta SEMPRE in UTM per calcoli corretti in metri --
+        # EPSG:3857 (Web Mercator) e simili hanno distanze falsate (~30% a lat 40)
         need_transform = False
         to_projected = None
         to_geographic = None
-        if source_crs.isGeographic():
+
+        # Determina se serve riproiezione:
+        # - CRS geografico (gradi)
+        # - EPSG:3857 / 900913 (Web Mercator, metri falsati)
+        # - Qualsiasi CRS non metrico
+        epsg_id = source_crs.authid()
+        is_mercator = epsg_id in ['EPSG:3857', 'EPSG:900913', 'EPSG:3785']
+        needs_reproject = source_crs.isGeographic() or is_mercator
+
+        if not needs_reproject:
+            # Verifica che le unita siano realmente metri
+            units = source_crs.mapUnits()
+            # QgsUnitTypes.DistanceMeters = 0
+            if units != 0:
+                needs_reproject = True
+
+        if needs_reproject:
+            # Trova centroide in WGS84 per calcolare zona UTM
+            wgs84 = QgsCoordinateReferenceSystem('EPSG:4326')
+            to_wgs84 = QgsCoordinateTransform(source_crs, wgs84, QgsProject.instance())
             extent = layer.extent()
-            clon = extent.center().x()
-            clat = extent.center().y()
+            center_pt = QgsGeometry.fromPointXY(QgsPointXY(extent.center()))
+            center_pt.transform(to_wgs84)
+            clon = center_pt.asPoint().x()
+            clat = center_pt.asPoint().y()
+
             utm_zone = int((clon + 180) / 6) + 1
             hemisphere = '6' if clat >= 0 else '7'
             epsg_code = int('32%s%02d' % (hemisphere, utm_zone))
@@ -332,9 +353,13 @@ class SestoImpiantoGenerator(QgsProcessingAlgorithm):
             to_projected = QgsCoordinateTransform(source_crs, work_crs, QgsProject.instance())
             to_geographic = QgsCoordinateTransform(work_crs, source_crs, QgsProject.instance())
             need_transform = True
-            feedback.pushInfo('CRS -> EPSG:%d' % epsg_code)
+
+            if is_mercator:
+                feedback.pushInfo('ATTENZIONE: CRS %s (Web Mercator) ha distanze falsate!' % epsg_id)
+            feedback.pushInfo('Riproiezione -> EPSG:%d per calcoli metrici corretti' % epsg_code)
         else:
             work_crs = source_crs
+            feedback.pushInfo('CRS: %s (unita metriche OK)' % epsg_id)
 
         # -- Geometria area --
         all_geom = self._merge_polygon(layer, to_projected if need_transform else None)
@@ -573,21 +598,36 @@ class SestoImpiantoGenerator(QgsProcessingAlgorithm):
 
                 export_points.append((lat, lon, wp_name, fila_num, pianta_num, varieta))
 
-            # Tutori per questa fila: distribuzione uniforme dal centro
+            # Tutori: distribuzione simmetrica dal centro della fila
             n_plants_row = len(row_pts)
             if tutori_interval > 0 and n_plants_row >= tutori_interval:
-                # Calcola quanti tutori servono e distribuiscili uniformemente
-                n_tutori = max(1, round(n_plants_row / float(tutori_interval)))
-                n_segmenti = n_tutori + 1
-                spaziatura = n_plants_row / float(n_segmenti)
+                # Centro della fila (0-based, frazionario)
+                # es. 23 piante -> centro = 11.0, 24 piante -> centro = 11.5
+                center = (n_plants_row - 1) / 2.0
 
-                for t in range(1, n_tutori + 1):
-                    # Posizione frazionaria (1-based)
-                    pos_float = t * spaziatura
+                # Genera posizioni dal centro verso l'esterno, ogni N piante
+                positions = [center]
+                step = 1
+                while True:
+                    added = False
+                    pos_left = center - step * tutori_interval
+                    pos_right = center + step * tutori_interval
+                    if pos_left >= 0:
+                        positions.append(pos_left)
+                        added = True
+                    if pos_right <= n_plants_row - 1:
+                        positions.append(pos_right)
+                        added = True
+                    if not added:
+                        break
+                    step += 1
 
+                positions.sort()
+
+                for pos in positions:
                     if tutori_pos == 0:
                         # Sulla pianta: arrotonda alla pianta piu vicina
-                        plant_idx = int(round(pos_float)) - 1
+                        plant_idx = int(round(pos))
                         plant_idx = max(0, min(plant_idx, n_plants_row - 1))
                         tp = row_pts[plant_idx][2]
                         t_lat, t_lon = to_latlon(tp)
@@ -595,15 +635,15 @@ class SestoImpiantoGenerator(QgsProcessingAlgorithm):
                             t_lat, t_lon, fila_num,
                             plant_idx + 1, 'sulla_pianta'))
                     else:
-                        # Tra due piante: interpola tra le due piante adiacenti
-                        idx_a = int(math.floor(pos_float)) - 1
-                        idx_b = idx_a + 1
+                        # Tra due piante: interpola nella posizione esatta
+                        idx_a = int(math.floor(pos))
+                        idx_b = int(math.ceil(pos))
                         idx_a = max(0, min(idx_a, n_plants_row - 1))
                         idx_b = max(0, min(idx_b, n_plants_row - 1))
                         if idx_a != idx_b:
+                            frac = pos - math.floor(pos)
                             p_a = row_pts[idx_a][2]
                             p_b = row_pts[idx_b][2]
-                            frac = pos_float - math.floor(pos_float)
                             mid_pt = QgsPointXY(
                                 p_a.x() + (p_b.x() - p_a.x()) * frac,
                                 p_a.y() + (p_b.y() - p_a.y()) * frac)
